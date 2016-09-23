@@ -136,7 +136,7 @@ applicationContext.xml中
 		<property name="employeeService" ref="employeeService"></property>	
 		<property name="departmentService" ref="departmentService"></property>
 	</bean>
-	[3]在struts2的配置文件中配置
+	[3]在struts2的配置文件中配置Action时,class属性应该是Action在ioc容器中的id(spring配置文件中的id)!!!!!!
 
 
 4.完成功能
@@ -224,6 +224,7 @@ public class EmployeeAction extends ActionSupport implements RequestAware{
 
 [7]struts.xml中配置结果
  <package name="default" namespace="/" extends="struts-default">
+ 			//class属性值为在spring中配置的id
         	<action name="emp-*" class="employeeAction" method="{1}">
         		<result name="list">/WEB-INF/views/emp-list.jsp</result>
         	</action>
@@ -231,7 +232,58 @@ public class EmployeeAction extends ActionSupport implements RequestAware{
 
 [8]转向结果页面/WEB-INF/views/emp-list.jsp
 emp-list.jsp中
+//使用ognl标签
 <%@ taglib prefix="s" uri="/struts-tags" %>
+<s:if test="#request.employees==null||#request.employees.size()==0">
+		没有任何员工信息
+	</s:if>
+	<s:else>
+		//迭代器
+			<s:iterator value="#request.employees">
+				<tr>
+					<td>${id }</td>
+					<td>${lastName}</td>
+					<td>${email }</td>
+					<td>${birth }</td>
+					<td>${createTime }</td>
+					<td>部门</td>
+				</tr>
+			</s:iterator>
+	</s:else>
 
-(2)
+获取所有员工信息时:若在dao中只查询Employee信息.而且Employee和
+Department还是使用的懒加载.页面还需显示员工信息,此时会出现懒加载异常
+代理对象不能被初始化org.hibernate.LazyInitializationException:
+解决方案,三种
+[1]打开懒加载:不推荐
+[2]获取Employee时使用 迫切左外链接同时初始化其关联的Department对象
+[3]使用OpenSessionInviewFilter
+
+
+******************************************************
+2.删除员工信息
+(1)emp-list.jsp中添加删除链接
+<td><a href="emp-delete?id=${id}"/>Delete</td>
+
+(2)EmployeeAction中添加删除所需的id属性并提供get set方法
+//删除
+	public String delete(){
+		return "SUCCESS";
+	}
+(3)EmployeeDao中
+public void delete(Integer id){
+		String hql="delete from Employee e where e.id=?";
+		getSession().createQuery(hql).setInteger(0, id).executeUpdate();
+	}
+(4)EmployeeService中
+public void delete(Integer id){
+		employeeDao.delete(id);
+	}	
+(5)struts.xml中
+<result name="success" type="redirect">/emp-list</result>
+即删除成功后,重新调用(重定向)emp-list这个action显示所有员工
+
+*************************
+2.2使用Ajax方式删除
+	
 
