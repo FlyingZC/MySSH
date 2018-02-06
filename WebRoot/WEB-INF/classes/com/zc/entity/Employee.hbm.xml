@@ -25,7 +25,32 @@
             <column name="CREATE_TIME" />
         </property>
         
-        <!-- 映射单向 n-1 的关联关系 -->
+        <!-- 
+        	映射单向 n-1 的关联关系 ,默认lazy为flase,不启用懒加载.
+        	可取值有"lazy" 必须具有列表 "false proxy no-proxy " 中的值
+        	lazy在实际配置中三个选项未见区别
+        	打印的sql
+        	Hibernate: 
+    select
+        employee0_.ID as ID1_1_,
+        employee0_.LAST_NAME as LAST_NAM2_1_,
+        employee0_.EMAIL as EMAIL3_1_,
+        employee0_.BIRTH as BIRTH4_1_,
+        employee0_.CREATE_TIME as CREATE_T5_1_,
+        employee0_.DEPARTMENT_ID as DEPARTME6_1_ 
+    from
+        SSH_EMPLOYEE employee0_
+Hibernate: 
+    select
+        department0_.ID as ID1_0_0_,
+        department0_.DEPARTMENT_NAME as DEPARTME2_0_0_ 
+    from
+        SSH_DEPARTMENT department0_ 
+    where
+        department0_.ID=?
+Employee [id=1, lastName=smith, email=123@qq.com, birth=2016-09-22 21:29:53.0, createTime=2016-09-22 21:30:01.0, department=Department [id=1, departmentName=人事部]]
+        	
+        -->
         <many-to-one name="department" class="com.zc.entity.Department">
             <column name="DEPARTMENT_ID" />
         </many-to-one>

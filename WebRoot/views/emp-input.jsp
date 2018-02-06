@@ -1,4 +1,5 @@
 <%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="s" uri="/struts-tags" %>
 <%
 String path = request.getContextPath();
 String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
@@ -9,16 +10,22 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
   <head>
     <base href="<%=basePath%>">
     
-    <title>My JSP 'index.jsp' starting page</title>
+    <title>添加员工</title>
 	<meta http-equiv="pragma" content="no-cache">
 	<meta http-equiv="cache-control" content="no-cache">
 	<meta http-equiv="expires" content="0">    
-	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
-	<meta http-equiv="description" content="This is my page">
   </head>
-  
   <body>
-	<a href="emp-list.action">List All Employees</a>
-	<a href="emp-input.action">添加员工信息</a>
+	<s:form action="emp-save.action" method="post" >
+		<s:textfield name="lastName" label="lastName"></s:textfield>
+		<s:textfield name="employee.email" label="邮箱"></s:textfield>
+		<s:select list="#request.department"
+			listKey="id" listValue="departmentName"
+			name="department.id" label="部门">
+		</s:select>
+		<s:textfield name="" label="描述"></s:textfield>
+		<s:submit></s:submit>
+		<s:debug></s:debug>
+	</s:form>  
   </body>
 </html>

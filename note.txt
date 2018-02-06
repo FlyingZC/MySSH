@@ -1,3 +1,4 @@
+http://localhost:8080/MySSH/index.jsp
 1.加入Spring
 (1)jar
 (2)配置web.xml文件
@@ -140,7 +141,7 @@ applicationContext.xml中
 
 
 4.完成功能
-(1)查询所有员工信息
+(1)查询所有员工信息list
 [1]index.jsp中<a href="emp-list">List All Employees</a>
 [2]新建EmployeeAction.java
 public class EmployeeAction extends ActionSupport{
@@ -175,6 +176,10 @@ public class EmployeeService {
 	public void setEmployeeDao(EmployeeDao employeeDao){
 		this.employeeDao=employeeDao;
 	}
+	//!!由于之前在applicationContext.xml中配置了transactionManager,并作用于get*方法上.
+	//这会导致在调用该方法之前开启session,该方法调用之后关闭session.此时会导致Employee中的Department因懒加载查询不出来抛异常
+	//参见Employee.hbm.xml配置
+	//即页面上<td>${department.departmentName }</td>获取不到
 	public List<Employee> getAll(){
 		return employeeDao.getAll();
 	}
@@ -285,5 +290,128 @@ public void delete(Integer id){
 
 *************************
 2.2使用Ajax方式删除
+(1)webroot下new folder->scripts
+导入jquery至该目录
+
+(2)emp-list.jsp中发送ajax请求
+$(function(){
+	//1.点击delete时,弹出确定要删除xx的信息吗.
+	//若确定执行删除,不确定,取消
+	$(".delete").click(function(){
+		var flag=confirm("确定要删除信息吗");
+		var lastName=$(this).next(":hidden").val();
+		if(flag){
+		//使用ajax方式删除
+		var delDr=$(this).parent().parent();
+		var url=this.href;
+		var args={"time":new Date()};
+			$.post(url,args,function(data){
+				//若data返回值为1,提示删除成功,把当前行删除
+				if(data=="1"){
+					alert("删除成功");
+					delDr.remove();
+				}else{
+				//若返回值不为1,提示删除失败
+					alert("删除失败!");						
+				}
+				
+			});
+		}
+		//2.取消超链接的默认行为
+		return false;
+	});
+	
+});
+
+(3)EmployeeAction.java中处理ajax请求
+public void setId(Integer id){
+		this.id=id;
+	}
+	//处理ajax请求
+	private InputStream inputStream;
+	public InputStream getInputStream(){
+		return inputStream;
+	}
+	public String delete() {
+		try {
+			employeeService.delete(id);
+			inputStream = new ByteArrayInputStream("1".getBytes("UTF-8"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			try {
+				inputStream = new ByteArrayInputStream("0".getBytes("UTF-8"));
+			} catch (UnsupportedEncodingException e1) {
+				e1.printStackTrace();
+			}
+		}
+		return "ajax-success";
+	}
+(3)struts.xml中
+<!-- 使用ajax删除的结果 -->
+<result type="stream" name="ajax-success">
+    <param name="contentType">text/html</param>
+    <param name="inputName">inputStream</param>
+</result>	
+
+
+
+***********************************************************
+3.添加员工
+(1)显示表单页面:需要先查询所有的部门信息
+(2)使用struts2的ModelDriven和Preparable拦截器
+(3)时间是字符串格式,需要转为一个Date类型的对象
+
+(1)index.jsp中添加链接
+<a href="emp-input.action">添加员工信息</a>
+(2)EmployeeAction.java中
+添加
+public String input(){
+	return "input";
+}
+在添加新员工页面之前,应查询出所有部门信息
+(3)由于DepartmentDao和EmployeeDao中有共用代码,抽取到BaseDao中
+private SessionFactory sessionFactory;
+public void setSessionFactory(SessionFactory sessionFactory){
+	this.sessionFactory=sessionFactory;
+}
+//获取session
+public Session getSession(){
+	return this.sessionFactory.getCurrentSession();
+}
+
+(4)创建DepartmentService调用DepartmentDao
+private DepartmentDao departmentDao;
+public void setDepartmentDao(DepartmentDao departmentDao){
+	this.departmentDao=departmentDao;
+}
+//调用dao查询
+public List<Department> getAll(){
+	return departmentDao.getAll();
+}
+
+(5)在EmployeeAction中添加DepartmentService属性
+//查询部门信息,跳转到添加员工页面
+public String input(){
+	request.put("department", departmentService.getAll());
+	return "input";
+}
+(6)struts.xml中配置
+<result name="input">/WEB-INF/views/emp-input.jsp</result>
+(7)新建emp-input.jsp,显示部门信息,接收新增员工
+<s:form action="emp-save.action" method="post">
+	<s:textfield name="lastName" label="lastName"></s:textfield>
+	<s:textfield name="email" label="邮箱"></s:textfield>
+	<s:textfield name="birth" label="生日"></s:textfield>
+	<s:select list="#request.department"
+		listKey="id" listValue="deaprtmentName"
+		name="department.id" label="部门">
+	</s:select>
+	<s:submit></s:submit>
+</s:form>   
+
+(8)在applicationContext-beans.xml中配置bean
+
+
+
 	
 

@@ -13,4 +13,15 @@ public class EmployeeService {
 	public List<Employee> getAll(){
 		return employeeDao.getAll();
 	}
+	public void delete(Integer id){
+		employeeDao.delete(id);
+	}
+	
+	public void saveOrUpdate(Employee employee){
+	    employeeDao.saveOrUpdate(employee);
+	}
+	
+	public Employee find(Integer id){
+	    return employeeDao.find(id);
+	}
 }
